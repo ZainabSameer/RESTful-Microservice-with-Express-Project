@@ -29,7 +29,6 @@ const updateSchema = joi
 
 export async function createCoffee(req, res) {
   try {
-    // validate request body
     const { error, value } = createSchema.validate(req.body, {
       abortEarly: false
     })
@@ -49,7 +48,6 @@ export async function createCoffee(req, res) {
     }
 
     await ddbDocClient.send(new PutCommand({ TableName: TABLE, Item: item }))
-    // validate stored item shape (optional check)
     const { error: itemErr } = coffeeSchema.validate(item)
     if (itemErr)
       console.warn('Stored item did not match coffeeSchema:', itemErr.details)
