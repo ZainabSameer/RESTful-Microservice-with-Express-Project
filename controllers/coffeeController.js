@@ -7,13 +7,38 @@ import {
   UpdateCommand,
   DeleteCommand
 } from '@aws-sdk/lib-dynamodb'
+import joi from 'joi'
+import coffeeSchema from '../models/coffee.js'
 
 const TABLE = process.env.COFFEE_TABLE || 'Coffees'
 
+// Request validation schemas
+const createSchema = joi.object({
+  name: joi.string().required(),
+  origin: joi.string().allow(null, '').optional(),
+  roast: joi.string().allow(null, '').optional()
+})
+
+const updateSchema = joi
+  .object({
+    name: joi.string().optional(),
+    origin: joi.string().allow(null, '').optional(),
+    roast: joi.string().allow(null, '').optional()
+  })
+  .min(1)
+
 export async function createCoffee(req, res) {
   try {
-    const { name, origin, roast } = req.body
-    if (!name) return res.status(400).json({ error: 'name is required' })
+    // validate request body
+    const { error, value } = createSchema.validate(req.body, {
+      abortEarly: false
+    })
+    if (error)
+      return res
+        .status(400)
+        .json({ error: error.details.map((d) => d.message) })
+
+    const { name, origin, roast } = value
 
     const item = {
       id: uuidv4(),
@@ -24,6 +49,11 @@ export async function createCoffee(req, res) {
     }
 
     await ddbDocClient.send(new PutCommand({ TableName: TABLE, Item: item }))
+    // validate stored item shape (optional check)
+    const { error: itemErr } = coffeeSchema.validate(item)
+    if (itemErr)
+      console.warn('Stored item did not match coffeeSchema:', itemErr.details)
+
     return res.status(201).json(item)
   } catch (err) {
     console.error('createCoffee error', err)
@@ -58,7 +88,15 @@ export async function getCoffeeById(req, res) {
 export async function updateCoffee(req, res) {
   try {
     const { id } = req.params
-    const { name, origin, roast } = req.body
+    const { error, value } = updateSchema.validate(req.body, {
+      abortEarly: false
+    })
+    if (error)
+      return res
+        .status(400)
+        .json({ error: error.details.map((d) => d.message) })
+
+    const { name, origin, roast } = value
     const expr = []
     const values = {}
     if (name !== undefined) {
