@@ -52,8 +52,6 @@ Run the app
 npm run dev
 ```
 
-The server listens on the `PORT` environment variable (default set in `.env.example` as 3002). Example base URL:
-
 ```
 http://localhost:3002
 ```
@@ -69,17 +67,8 @@ Endpoints (JSON)
 - DELETE /coffees/:id — delete coffee
 
 ```bash
-curl -X POST http://localhost:3002/coffees \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Kenya AA","origin":"Kenya","roast":"Medium"}'
-```
-
-Example curl (read all):
-
-```bash
 curl http://localhost:3002/coffees
 ```
-
 
 Attributions
 
